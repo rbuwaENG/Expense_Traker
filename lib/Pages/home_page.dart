@@ -1,4 +1,6 @@
 import 'package:expense_app/Pages/expense_item.dart';
+import 'package:expense_app/components/expense_summary.dart';
+import 'package:expense_app/components/expense_tile.dart';
 import 'package:expense_app/data/expense_data.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -12,7 +14,16 @@ class homePage extends StatefulWidget {
 
 class _homePageState extends State<homePage> {
   final newExpenseNameController = TextEditingController();
-  final newExpenseAmountController = TextEditingController();
+  final newExpenseRupeesAmountController = TextEditingController();
+  final newExpenseCentsAmountController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    //read data from hive
+    Provider.of<ExpenseData>(context, listen: false).prepareData();
+  }
+
   void addNewExpense() {
     showDialog(
         context: context,
@@ -27,11 +38,27 @@ class _homePageState extends State<homePage> {
                         labelText: 'Expense Name',
                       ),
                     ),
-                    TextField(
-                      controller: newExpenseAmountController,
-                      decoration: InputDecoration(
-                        labelText: 'Expense Amount',
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: newExpenseRupeesAmountController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Rupees',
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: newExpenseCentsAmountController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Cents',
+                            ),
+                          ),
+                        )
+                      ],
                     ),
                   ],
                 ),
@@ -47,18 +74,40 @@ class _homePageState extends State<homePage> {
                 ]));
   }
 
+  //delete espense
+  void deleteExpense(ExpenseItem expense) {
+    Provider.of<ExpenseData>(context, listen: false).deleteExpense(expense);
+  }
+
   void Save() {
-    //create a new expense item
-    ExpenseItem newExpense = ExpenseItem(
-        name: newExpenseNameController.text,
-        amount: newExpenseAmountController.text,
-        date: DateTime.now());
-    Provider.of<ExpenseData>(context, listen: false).addNewExpense(newExpense);
+    if (newExpenseCentsAmountController.text.isNotEmpty &&
+        newExpenseRupeesAmountController.text.isNotEmpty &&
+        newExpenseNameController.text.isNotEmpty) {
+      String amount = newExpenseRupeesAmountController.text +
+          '.' +
+          newExpenseCentsAmountController.text;
+      //create a new expense item
+      ExpenseItem newExpense = ExpenseItem(
+          name: newExpenseNameController.text,
+          amount: amount,
+          date: DateTime.now());
+      Provider.of<ExpenseData>(context, listen: false)
+          .addNewExpense(newExpense);
+    }
+
     Navigator.pop(context);
+    clear();
   }
 
   void Cancel() {
     Navigator.pop(context);
+    clear();
+  }
+
+  void clear() {
+    newExpenseNameController.clear();
+    newExpenseRupeesAmountController.clear();
+    newExpenseCentsAmountController.clear();
   }
 
   @override
@@ -68,13 +117,32 @@ class _homePageState extends State<homePage> {
           backgroundColor: Colors.grey[300],
           floatingActionButton: FloatingActionButton(
             onPressed: addNewExpense,
+            backgroundColor: Colors.black,
             child: Icon(Icons.add),
           ),
-          body: ListView.builder(
-              itemCount: value.getAllExpenseList().length,
-              itemBuilder: (context, index) => ListTile(
-                    title: Text(value.getAllExpenseList()[index].name),
-                  ))),
+          body: ListView(
+            children: [
+              //weekly summery
+              ExpenseSummary(startOfweek: value.startOfWeekDate()),
+
+              //space
+              const SizedBox(
+                height: 20,
+              ),
+              //list of all expense
+              ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: value.getAllExpenseList().length,
+                  itemBuilder: (context, index) => ExpenseTile(
+                        name: value.getAllExpenseList()[index].name,
+                        amount: value.getAllExpenseList()[index].amount,
+                        date: value.getAllExpenseList()[index].date,
+                        deleteTapped: (p0) =>
+                            deleteExpense(value.getAllExpenseList()[index]),
+                      ))
+            ],
+          )),
     );
   }
 }
