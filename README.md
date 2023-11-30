@@ -26,7 +26,8 @@ Expense Tracker is a user-friendly Flutter application designed to effortlessly 
 ## Technologies Used:
  - Flutter
  - Dart
- - Hive 
+ - Hive
+   
 Feel free to explore, contribute, and make the most of your daily expense tracking with the Smooth Expense Tracker app!
 Feel free to customize this description based on the specific features and technologies used in your Flutter expense tracker app.
 you can try the app from  <a href="https://github.com/rbuwaENG/Expense_Traker/tree/main/Application">here</a></br>
